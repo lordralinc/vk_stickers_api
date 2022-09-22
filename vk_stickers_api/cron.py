@@ -2,8 +2,6 @@ import datetime
 
 import aiohttp
 import apscheduler.schedulers.asyncio
-import typing
-
 import tortoise.exceptions
 
 from vk_stickers_api import const, models
@@ -130,6 +128,7 @@ async def update_or_create(sticker_pack: dict):
                 'date': datetime.datetime.now().timestamp()
             }
         )
+    await session.close()
 
 
 async def collect_stickers():
