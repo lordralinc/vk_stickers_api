@@ -29,9 +29,17 @@ async def get_user_sticker_packs(user_id: int) -> schemas.UserStickerPacks:
     stickers_ids = set([s['gift']['stickers_product_id'] for s in stickers])
     stickers = [await sticker_pack.pydantic() async for sticker_pack in models.StickerPack.filter(id__in=stickers_ids)]
 
-    free_stickers = list(filter(lambda x: x.free, stickers))
-    common_stickers = list(filter(lambda x: not x.has_animation and not x.free, stickers))
-    animated_stickers = list(filter(lambda x: x.has_animation, stickers))
+    free_stickers = []
+    common_stickers = []
+    animated_stickers = []
+    for sticker in stickers:
+        if sticker.free:
+            free_stickers.append(sticker)
+            continue
+        if sticker.has_animation:
+            animated_stickers.append(sticker)
+            continue
+        common_stickers.append(sticker)
 
     return schemas.UserStickerPacks(
         cost=schemas.UserStickerPacksCounter(
