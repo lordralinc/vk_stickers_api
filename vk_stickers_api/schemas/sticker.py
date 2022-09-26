@@ -43,6 +43,7 @@ class Sticker(pydantic.BaseModel):
 
 
 class UserStickerPacksCounter(pydantic.BaseModel):
+    free: int
     common: int
     animated: int
     all: int
@@ -52,5 +53,6 @@ class UserStickerPacks(pydantic.BaseModel):
     count: UserStickerPacksCounter
     cost: UserStickerPacksCounter
 
+    free: typing.List[StickerPack]
     common: typing.List[StickerPack]
     animated: typing.List[StickerPack]

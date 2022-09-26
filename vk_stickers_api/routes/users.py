@@ -30,20 +30,23 @@ async def get_user_sticker_packs(user_id: int) -> schemas.UserStickerPacks:
     stickers = [await sticker_pack.pydantic() async for sticker_pack in models.StickerPack.filter(id__in=stickers_ids)]
 
     free_stickers = list(filter(lambda x: x.free, stickers))
-    common_stickers = list(filter(lambda x: not (x.has_animation or x.free), stickers))
+    common_stickers = list(filter(lambda x: not x.has_animation and not x.free, stickers))
     animated_stickers = list(filter(lambda x: x.has_animation, stickers))
 
     return schemas.UserStickerPacks(
         cost=schemas.UserStickerPacksCounter(
             common=sum(map(lambda x: x.price_buy if x.price_buy else 0, common_stickers)),
             animated=sum(map(lambda x: x.price_buy if x.price_buy else 0, animated_stickers)),
+            free=0,
             all=sum(map(lambda x: x.price_buy if x.price_buy else 0, stickers)),
         ),
         count=schemas.UserStickerPacksCounter(
             common=len(common_stickers),
             animated=len(animated_stickers),
+            free=len(free_stickers),
             all=len(stickers)
         ),
+        free=free_stickers,
         common=common_stickers,
         animated=animated_stickers
     )
