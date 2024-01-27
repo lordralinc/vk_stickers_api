@@ -1,5 +1,4 @@
 import http
-import typing
 
 import tortoise.exceptions
 from fastapi import APIRouter, HTTPException, Query
@@ -15,17 +14,17 @@ router = APIRouter(
 
 @router.get(
     '/stickerPacks',
-    response_model=typing.List[schemas.StickerPack],
+    response_model=list[schemas.StickerPack],
     description='Получить список стикер-паков'
 )
 async def get_sticker_packs(
         offset: int = Query(0, ge=0),
-        has_animation: typing.Optional[bool] = None,
-        can_purchase: typing.Optional[bool] = None,
-        can_gift: typing.Optional[bool] = None,
-        price_gte: typing.Optional[int] = None,
-        price_lte: typing.Optional[int] = None,
-) -> typing.List[schemas.StickerPack]:
+        has_animation: bool | None = None,
+        can_purchase: bool | None = None,
+        can_gift: bool | None = None,
+        price_gte: int | None = None,
+        price_lte: int | None = None,
+) -> list[schemas.StickerPack]:
     qs = Q()
     if has_animation is not None:
         qs &= Q(has_animation=has_animation)
@@ -54,8 +53,8 @@ async def get_sticker_pack_by_id(
 ) -> schemas.StickerPack:
     try:
         pack = await models.StickerPack.get(id=pack_id)
-    except tortoise.exceptions.DoesNotExist:
-        raise HTTPException(http.HTTPStatus.NOT_FOUND, detail=f"Sticker pack #{pack_id} not found")
+    except tortoise.exceptions.DoesNotExist as ex:
+        raise HTTPException(http.HTTPStatus.NOT_FOUND, detail=f"Sticker pack #{pack_id} not found") from ex
 
     return await pack.pydantic()
 
@@ -70,19 +69,19 @@ async def get_sticker_by_id(
 ) -> schemas.Sticker:
     try:
         sticker = await models.Sticker.get(id=sticker_id)
-    except tortoise.exceptions.DoesNotExist:
-        raise HTTPException(http.HTTPStatus.NOT_FOUND, detail=f"Sticker #{sticker_id} not found")
+    except tortoise.exceptions.DoesNotExist as ex:
+        raise HTTPException(http.HTTPStatus.NOT_FOUND, detail=f"Sticker #{sticker_id} not found") from ex
     return await sticker.pydantic()
 
 
 @router.get(
     '/stickersByPack/{pack_id}',
-    response_model=typing.List[schemas.Sticker],
+    response_model=list[schemas.Sticker],
     description='Получить список стикеров по ID стикер-пака'
 )
 async def get_stickers_by_pack_by_id(
         pack_id: int
-) -> typing.List[schemas.Sticker]:
+) -> list[schemas.Sticker]:
     stickers = await models.Sticker.filter(sticker_pack_id=pack_id)
     return [
         await sticker.pydantic()

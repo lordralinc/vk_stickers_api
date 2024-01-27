@@ -1,60 +1,59 @@
-import typing
-
 from fastapi import APIRouter
 
-from vk_stickers_api import models, const
+from vk_stickers_api import const, models
+from vk_stickers_api.cron import update_not_created_stickers
 from vk_stickers_api.schemas import sticker as schemas
 
-router = APIRouter(
-    tags=['users']
-)
+router = APIRouter(tags=["users"])
 
 
 @router.get(
-    '/userStickerPacks/{user_id}',
+    "/userStickerPacks/{user_id}",
     response_model=schemas.UserStickerPacks,
-    description='Получить информацию о стикерах пользователя'
+    description="Получить информацию о стикерах пользователя",
 )
 async def get_user_sticker_packs(user_id: int) -> schemas.UserStickerPacks:
-    gifts = await const.API.method(
-        "gifts.getCatalog",
-        no_inapp=0,
+    stickers_ids: list[int] = await const.API.method(
+        "execute",
+        code="""return API.store.getProducts({user_id: Args.user_id, type: "stickers", filters: "purchased"}).items@.id;""",
         user_id=user_id,
-        force_payment=1
     )
-    stickers_gifts = [s for s in gifts if s['name'] in {'stickers_popular', 'stickers'}]
-    stickers = []
-    for sticker_gift in stickers_gifts:
-        stickers += [item for item in sticker_gift['items'] if item.get('disabled', False)]
-    stickers_ids = set([s['gift']['stickers_product_id'] for s in stickers])
-    stickers = [await sticker_pack.pydantic() async for sticker_pack in models.StickerPack.filter(id__in=stickers_ids)]
+    not_applyed_stickers: list[int] = stickers_ids.copy()
 
-    free_stickers = []
-    common_stickers = []
-    animated_stickers = []
-    for sticker in stickers:
-        if sticker.free:
-            free_stickers.append(sticker)
-            continue
-        if sticker.has_animation:
-            animated_stickers.append(sticker)
-            continue
-        common_stickers.append(sticker)
+    stickers: list[schemas.StickerPack] = []
+    free_stickers: list[schemas.StickerPack] = []
+    common_stickers: list[schemas.StickerPack] = []
+    animated_stickers: list[schemas.StickerPack] = []
 
+    async for pack in models.StickerPack.all():
+        for sticker_id in stickers_ids:
+            if pack.id == sticker_id:
+                pydantic_pack = await pack.pydantic()
+                not_applyed_stickers.remove(pack.id)
+                stickers.append(pydantic_pack)
+                if pack.free:
+                    free_stickers.append(pydantic_pack)
+                elif pack.has_animation:
+                    animated_stickers.append(pydantic_pack)
+                else:
+                    common_stickers.append(pydantic_pack)
+    if not_applyed_stickers:
+        await update_not_created_stickers(not_applyed_stickers, user_id)
+        return await get_user_sticker_packs(user_id)
     return schemas.UserStickerPacks(
         cost=schemas.UserStickerPacksCounter(
-            common=sum(map(lambda x: x.price_buy if x.price_buy else 0, common_stickers)),
-            animated=sum(map(lambda x: x.price_buy if x.price_buy else 0, animated_stickers)),
+            common=sum(x.price_buy if x.price_buy else 0 for x in common_stickers),
+            animated=sum(x.price_buy if x.price_buy else 0 for x in animated_stickers),
             free=0,
-            all=sum(map(lambda x: x.price_buy if x.price_buy else 0, stickers)),
+            all=sum(x.price_buy if x.price_buy else 0 for x in stickers),
         ),
         count=schemas.UserStickerPacksCounter(
             common=len(common_stickers),
             animated=len(animated_stickers),
             free=len(free_stickers),
-            all=len(stickers)
+            all=len(stickers_ids),
         ),
         free=free_stickers,
         common=common_stickers,
-        animated=animated_stickers
+        animated=animated_stickers,
     )

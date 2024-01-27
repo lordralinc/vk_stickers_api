@@ -5,16 +5,138 @@ description = ""
 authors = ["lordralinc <46781434+lordralinc@users.noreply.github.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.10"
-fastapi = "^0.79.0"
-aiohttp = "^3.8.1"
+python = ">=3.10,<4.0"
 tortoise-orm = "^0.19.2"
 uvicorn = "^0.18.2"
-pydantic = {extras = ["dotenv"], version = "^1.9.2"}
 APScheduler = "^3.9.1"
-requests = "^2.28.1"
+httpx = "^0.26.0"
+pydantic = "^2.5.3"
+fastapi = "^0.109.0"
+pydantic-settings = "^2.1.0"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
+mypy = "^1.8.0"
+black = "^23.12.1"
+mypy-extensions = "^1.0.0"
+ruff = "^0.1.9"
+
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true
+warn_no_return = false
+warn_return_any = false
+warn_unused_configs = true
+check_untyped_defs = true
+
+
+[[tool.mypy.overrides]]
+# Ignore tests, because we can use fixtures that not quite represent a real type
+module = "tests.*"
+ignore_errors = true
+
+[tool.black]
+line-length = 99
+target-version = ['py311']
+
+
+[tool.ruff]
+line-length = 99
+respect-gitignore = true
+target-version = "py311"
+select = [
+  "PL",    # pylint
+  "F",     # pyflakes
+  "E",     # pycodestyle errors
+  "W",     # pycodestyle warnings
+  "C90",   # mccabe
+  "I",     # isort
+  "N",     # pep8-naming
+  "YTT",   # flake8-2020
+  "S",     # flake8-bandit
+  "B",     # flake8-bugbear
+  "A",     # flake8-builtins
+  "C40",   # flake8-comprehensions
+  "T10",   # flake8-debugger
+  "EXE",   # flake8-executable
+  "PTH",   # flake8-use-pathlib
+  "ISC",   # flake8-implicit-str-concat
+  "ICN",   # flake8-import-conventions
+  "G",     # flake8-logging-format
+  "PIE",   # flake8-pie
+  "T20",   # flake8-print
+  "PT",    # flake8-pytest-style
+  "SIM",   # flake8-simplify
+  "TID",   # flake8-tidy-imports
+  "TCH",   # flake8-type-checking
+  "ARG",   # flake8-unused-arguments
+  "DJ",    # flake8-Django
+  "PGH",   # pygrep-hooks
+  "RSE",   # flake8-raise
+  "RUF",   # ruff
+  "UP006", # Use `list` instead of `List` for type annotation
+  "UP007", # Use `X | Y` for type annotations
+  "S311",  # Standard pseudo-random generators are not suitable for cryptographic purposes
+  "ALL",   # All not listed above
+]
+ignore = [
+  "ANN", # flake8-annotations
+  "BLE", # flake8-blind-except
+  "FBT", # flake8-boolean-trap
+  "COM", # flake8-commas
+  "DTZ", # flake8-datetimez
+  "EM",  # flake8-errmsg
+  "INP", # flake8-no-pep420
+  "PYI", # flake8-pyi
+  "Q",   # flake8-quotes
+  "RET", # flake8-return
+  "ERA", # flake8-eradicate
+  "PD",  # pandas-vet
+  "D",   # pydocstyle
+  "TRY", # tryceratops
+  "SLF", # flake8-self
+  # "E203",  # whitespace before ':' (black)
+  "E501", # line too long
+  # "W503",  # line break before binary operator (black)
+  # "W504",  # line break after binary operator (black)
+  "B905",    # `zip()` without an explicit `strict=` parameter (python3.10+ only)
+  "PLR0913", # Too many arguments to function call
+  "A003",    # Class attribute builtin name shadowing
+  "N818",    # Exception should be named with an Error suffix
+  "PGH003",  # Use specific rule codes when ignoring type issues
+  "ARG002",  # Unused method argument
+  "RUF001",  # String contains ambiguous unicode character
+  "RUF002",  # Docstring contains ambiguous unicode character
+  "RUF003",  # Comment contains ambiguous unicode character
+  "PLW2901", # for loop variable overwritten by assignment target
+  "PLE1205", # https://github.com/charliermarsh/ruff/issues/3351
+  "B030",    # Except handlers should only be exception classes or tuples of exception
+
+  "S301",   # `pickle` and modules that wrap it can be unsafe when used to deserialize untrusted data, possible security issue
+  "RSE102",
+  "EXE002",
+]
+
+[tool.ruff.per-file-ignores]
+"tests/**.py" = [
+  "S101",    # Use of assert detected
+  "PLR2004", # Magic value used in comparison
+  "S106",    # Possible hardcoded password
+  "ARG001",  # Unused function argument
+  "ARG005",  # Unused lambda argument
+]
+
+[tool.ruff.pep8-naming]
+# Allow Pydantic's `@validator` decorator to trigger class method treatment.
+classmethod-decorators = [
+  "classmethod",
+  "pydantic.validator",
+  "pydantic.root_validator",
+]
+
+[tool.ruff.flake8-type-checking]
+exempt-modules = ["typing_extensions", "typing"]
+
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

@@ -30,15 +30,15 @@ class StickerPack(pydantic.BaseModel):
     photo_592: typing.Optional[str] = None
     background: typing.Optional[str] = None
 
-    previews: typing.List[ImagePydantic] = []
+    previews: list[ImagePydantic] = []
 
 
 class Sticker(pydantic.BaseModel):
     id: int
     is_allowed: bool = False
-    keywords: typing.List[str] = []
-    images: typing.List[ImagePydantic] = []
-    images_with_background: typing.List[ImagePydantic] = []
+    keywords: list[str] = []
+    images: list[ImagePydantic] = []
+    images_with_background: list[ImagePydantic] = []
     sticker_pack_id: int
 
 
@@ -53,6 +53,6 @@ class UserStickerPacks(pydantic.BaseModel):
     count: UserStickerPacksCounter
     cost: UserStickerPacksCounter
 
-    free: typing.List[StickerPack]
-    common: typing.List[StickerPack]
-    animated: typing.List[StickerPack]
+    free: list[StickerPack]
+    common: list[StickerPack]
+    animated: list[StickerPack]
